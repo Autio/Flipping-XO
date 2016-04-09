@@ -14,8 +14,17 @@ public class GameController : MonoBehaviour {
     private List<tile> tileList = new List<tile>();
 
     public Transform[] discs = new Transform[4];
-	// Use this for initialization
-	void Start () {
+    Vector2[] directions = new Vector2[4];
+    
+    
+    // Use this for initialization
+
+    void Start () {
+        directions[0] = new Vector2(1, 0);
+        directions[1] = new Vector2(0, 1);
+        directions[2] = new Vector2(0, -1);
+        directions[3] = new Vector2(-1, 0);
+
         selectorPos = new Vector2(0, 0);
         for (int i = 0; i < 4; i++)
         {
@@ -43,8 +52,17 @@ public class GameController : MonoBehaviour {
         public Vector2 tilePos;
         public int stack;
         public Transform tileObject;
-        public List<Transform> tokens = new List<Transform>();
+        public List<token> tokens = new List<token>();
     }
+
+    class token
+    {
+        public Transform tokenObject;
+        public int ownerPlayer;
+
+    }
+
+
 
     void MakeMove(Vector2 dir)
     {
@@ -88,8 +106,11 @@ public class GameController : MonoBehaviour {
         if (targetTile.stack < 4)
         {
             int yOffset = -3 + targetTile.stack * 2;
-            Transform token = (Transform)Instantiate(discs[player - 1], new Vector3(pos.x * tileSize, pos.y * tileSize + yOffset, 0), Quaternion.identity);
-            targetTile.tokens.Add(token);
+            Transform tokenObject = (Transform)Instantiate(discs[player - 1], new Vector3(pos.x * tileSize, pos.y * tileSize + yOffset, 0), Quaternion.identity);
+            token tok = new token();
+            tok.tokenObject = tokenObject;
+            tok.ownerPlayer = player;
+            targetTile.tokens.Add(tok);
             targetTile.stack += 1;
         }
         
@@ -102,6 +123,74 @@ public class GameController : MonoBehaviour {
         if(player > playerLimit)
         {
             player = 1;
+        }
+
+        CheckEnd();
+    }
+
+    void CheckEnd()
+    {
+        // cycle through all tiles
+        // see if there is a token
+        // check the topmost token 
+        // then look in all directions if there is another similar topmost token
+        // if yes, then check in the same direction if there is a third
+
+        // if there is a combo of three, game over
+
+        foreach (tile t in tileList)
+        {
+            if(t.tokens.Count > 0)
+            {
+                int tokenType = t.tokens[t.tokens.Count - 1].ownerPlayer;
+                Debug.Log("The topmost token on tile at position " + t.tilePos + " belongs to player " + tokenType);
+                // then check all legitimate neighbouring tiles
+                foreach (Vector2 d in directions)
+                {
+                    Vector2 targetTilePos = t.tilePos += d;
+                    Debug.Log("target tile pos " + targetTilePos);
+                    // check in bounds
+                    if ((targetTilePos.x >= 0 && targetTilePos.x < 3) && (targetTilePos.y >= 0 && targetTilePos.y < 3))
+                    {
+
+                        // in bounds, so find the tile in the position and check the topmost tile
+                        foreach (tile t2 in tileList)
+                        {
+                            if (t2.tilePos == targetTilePos)
+                            {
+                               
+                                if(t2.tokens.Count > 0)
+                                {
+                                    if(t2.tokens[t2.tokens.Count - 1].ownerPlayer == tokenType)
+                                    {
+                                        Debug.Log("Two in a row");
+                                        // second tile matches so check third in the same dir
+                                        targetTilePos += d;
+                                        if ((targetTilePos.x >= 0 && targetTilePos.x < 3) && (targetTilePos.y >= 0 && targetTilePos.y < 3))
+                                        {
+                                            foreach (tile t3 in tileList)
+                                            {
+                                                if(t3.tilePos == targetTilePos)
+                                                {
+                                                    if(t3.tokens.Count > 0)
+                                                    {
+                                                        if(t3.tokens[t3.tokens.Count - 1].ownerPlayer == tokenType)
+                                                        {
+                                                            
+                                                            Debug.Log("Player " + tokenType + " wins!");
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                    }
+                }
+            }
         }
     }
 
