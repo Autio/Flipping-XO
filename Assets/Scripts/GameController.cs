@@ -112,14 +112,70 @@ public class GameController : MonoBehaviour {
             int yOffset = -3 + targetTile.stack * 2;
             Transform tokenObject = (Transform)Instantiate(discs[player - 1], new Vector3(pos.x * tileSize, pos.y * tileSize + yOffset, 0), Quaternion.identity);
             token tok = new token();
-            tok.tokenObject = tokenObject;
+                   tok.tokenObject = tokenObject;
             tok.ownerPlayer = player;
+            tok.tokenObject.transform.FindChild("sprite").GetComponent<SpriteRenderer>().sortingOrder = targetTile.stack;
+
             targetTile.tokens.Add(tok);
             targetTile.stack += 1;
         }
         
     }
 
+    bool FlipStack(Vector2 pos)
+    {
+        // check in bounds
+        if (!CheckInBounds(pos))
+        {
+            return false;
+        }
+        else
+        {
+            tile targetTile = null;
+            // find tile in pos
+            foreach (tile t in tileList)
+            {
+                if (t.tilePos == pos)
+                {
+                    targetTile = t;
+                    break;
+                }
+            }
+
+            // are there more than one tokens on the stack
+            if (targetTile.tokens.Count < 1)
+            {
+                return false;
+            }
+
+            // reverse stack  
+            for (int t = 0; t < targetTile.tokens.Count; t++)
+            {
+                Debug.Log(targetTile.tokens[t].ownerPlayer);
+            }
+            targetTile.tokens.Reverse();
+                                                                                                                                                                          
+            for (int t = 0; t < targetTile.tokens.Count; t++)
+            {
+                Debug.Log(targetTile.tokens[t].ownerPlayer);
+            }
+            // place pieces in reverse order
+            for (int k = 0; k < targetTile.tokens.Count; k++)
+            {
+                int yOffset = -3 + k * 2;
+                Transform tTrans = targetTile.tokens[targetTile.tokens.Count - 1 - k].tokenObject.transform;
+                tTrans.position = new Vector3(targetTile.tilePos.x * tileSize, targetTile.tilePos.y * tileSize + yOffset, 0);
+
+                // adjust z-depth 
+                tTrans.FindChild("sprite").GetComponent<SpriteRenderer>().sortingOrder = k;
+
+
+            }
+
+
+            return true; 
+        }
+    }
 
     void FinishTurn()
     {
@@ -233,6 +289,16 @@ public class GameController : MonoBehaviour {
                 PlaceToken(selectorPos);
                 FinishTurn();
             }
+            if(Input.GetKeyDown(KeyCode.F))
+            {
+                if(FlipStack(selectorPos))
+                {
+
+                    FlipStack(selectorPos);        
+                }
+           
+            }
+
         }
         
 
