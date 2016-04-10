@@ -14,16 +14,20 @@ public class GameController : MonoBehaviour {
     private List<tile> tileList = new List<tile>();
 
     public Transform[] discs = new Transform[4];
-    Vector2[] directions = new Vector2[4];
+    Vector2[] directions = new Vector2[8];
     
     
     // Use this for initialization
 
     void Start () {
-        directions[0] = new Vector2(1, 0);
-        directions[1] = new Vector2(0, 1);
-        directions[2] = new Vector2(0, -1);
-        directions[3] = new Vector2(-1, 0);
+        directions[0] = new Vector2(0, 1);
+        directions[1] = new Vector2(1, 1);
+        directions[2] = new Vector2(1, 0);
+        directions[3] = new Vector2(1, -1);
+        directions[4] = new Vector2(0, -1);
+        directions[5] = new Vector2(-1, -1);
+        directions[6] = new Vector2(-1, -0);
+        directions[7] = new Vector2(-1, 1);
 
         selectorPos = new Vector2(0, 0);
         for (int i = 0; i < 4; i++)
@@ -128,6 +132,17 @@ public class GameController : MonoBehaviour {
         CheckEnd();
     }
 
+    bool CheckInBounds(Vector2 pos)
+    {
+        if ((pos.x >= 0 && pos.x < 4) && (pos.y >= 0 && pos.y < 4))
+        {
+            return true;
+        } else
+        {
+            return false;
+        }
+    }
+
     void CheckEnd()
     {
         // cycle through all tiles
@@ -147,10 +162,10 @@ public class GameController : MonoBehaviour {
                 // then check all legitimate neighbouring tiles
                 foreach (Vector2 d in directions)
                 {
-                    Vector2 targetTilePos = t.tilePos += d;
+                    Vector2 targetTilePos = t.tilePos + d;
                     Debug.Log("target tile pos " + targetTilePos);
                     // check in bounds
-                    if ((targetTilePos.x >= 0 && targetTilePos.x < 3) && (targetTilePos.y >= 0 && targetTilePos.y < 3))
+                    if (CheckInBounds(targetTilePos))
                     {
 
                         // in bounds, so find the tile in the position and check the topmost tile
@@ -158,7 +173,6 @@ public class GameController : MonoBehaviour {
                         {
                             if (t2.tilePos == targetTilePos)
                             {
-                               
                                 if(t2.tokens.Count > 0)
                                 {
                                     if(t2.tokens[t2.tokens.Count - 1].ownerPlayer == tokenType)
@@ -166,7 +180,7 @@ public class GameController : MonoBehaviour {
                                         Debug.Log("Two in a row");
                                         // second tile matches so check third in the same dir
                                         targetTilePos += d;
-                                        if ((targetTilePos.x >= 0 && targetTilePos.x < 3) && (targetTilePos.y >= 0 && targetTilePos.y < 3))
+                                        if (CheckInBounds(targetTilePos))
                                         {
                                             foreach (tile t3 in tileList)
                                             {
@@ -187,7 +201,6 @@ public class GameController : MonoBehaviour {
                                 }
                             }
                         }
-
                     }
                 }
             }
