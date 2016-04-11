@@ -9,6 +9,7 @@ public class GameController : MonoBehaviour {
     int playerLimit = 4;
     states state = states.playing;
     public Transform[] backgroundTiles = new Transform[2];
+    public Transform highlightTile;
     public Transform selector;
     private Vector2 selectorPos;
     private List<tile> tileList = new List<tile>();
@@ -89,7 +90,7 @@ public class GameController : MonoBehaviour {
                 selectorPos.y = Mathf.Clamp(selectorPos.y, 0, 3);
             }
         }
-        Debug.Log(selectorPos);
+      //  Debug.Log(selectorPos);
         selector.transform.position = new Vector3(selectorPos.x * tileSize, selectorPos.y * tileSize, 0);
     }
 	
@@ -112,7 +113,7 @@ public class GameController : MonoBehaviour {
             int yOffset = -3 + targetTile.stack * 2;
             Transform tokenObject = (Transform)Instantiate(discs[player - 1], new Vector3(pos.x * tileSize, pos.y * tileSize + yOffset, 0), Quaternion.identity);
             token tok = new token();
-                   tok.tokenObject = tokenObject;
+            tok.tokenObject = tokenObject;
             tok.ownerPlayer = player;
             tok.tokenObject.transform.FindChild("sprite").GetComponent<SpriteRenderer>().sortingOrder = targetTile.stack;
 
@@ -149,29 +150,19 @@ public class GameController : MonoBehaviour {
             }
 
             // reverse stack  
-            for (int t = 0; t < targetTile.tokens.Count; t++)
-            {
-                Debug.Log(targetTile.tokens[t].ownerPlayer);
-            }
             targetTile.tokens.Reverse();
                                                                                                                                                                           
-            for (int t = 0; t < targetTile.tokens.Count; t++)
-            {
-                Debug.Log(targetTile.tokens[t].ownerPlayer);
-            }
             // place pieces in reverse order
             for (int k = 0; k < targetTile.tokens.Count; k++)
             {
                 int yOffset = -3 + k * 2;
-                Transform tTrans = targetTile.tokens[targetTile.tokens.Count - 1 - k].tokenObject.transform;
+                Transform tTrans = targetTile.tokens[k].tokenObject.transform;
+                //  Transform tTrans = targetTile.tokens[targetTile.tokens.Count - 1 - k].tokenObject.transform;
                 tTrans.position = new Vector3(targetTile.tilePos.x * tileSize, targetTile.tilePos.y * tileSize + yOffset, 0);
 
                 // adjust z-depth 
                 tTrans.FindChild("sprite").GetComponent<SpriteRenderer>().sortingOrder = k;
-
-
             }
-
 
             return true; 
         }
@@ -223,7 +214,6 @@ public class GameController : MonoBehaviour {
                     // check in bounds
                     if (CheckInBounds(targetTilePos))
                     {
-
                         // in bounds, so find the tile in the position and check the topmost tile
                         foreach (tile t2 in tileList)
                         {
@@ -246,7 +236,12 @@ public class GameController : MonoBehaviour {
                                                     {
                                                         if(t3.tokens[t3.tokens.Count - 1].ownerPlayer == tokenType)
                                                         {
-                                                            
+                                                            EndGame();
+                                                            // highlight winning combination of tiles
+                                                            Debug.Log(t.tilePos.x);
+                                                            Instantiate(highlightTile, new Vector3(t.tilePos.x * tileSize, t.tilePos.y * tileSize, 0), Quaternion.identity);
+                                                            Instantiate(highlightTile, new Vector3(t2.tilePos.x * tileSize, t2.tilePos.y * tileSize, 0), Quaternion.identity);
+                                                            Instantiate(highlightTile, new Vector3(t3.tilePos.x * tileSize, t3.tilePos.y * tileSize, 0), Quaternion.identity);
                                                             Debug.Log("Player " + tokenType + " wins!");
                                                         }
                                                     }
@@ -261,6 +256,11 @@ public class GameController : MonoBehaviour {
                 }
             }
         }
+    }
+
+    void EndGame()
+    {
+        state = states.ending;
     }
 
     // Update is called once per frame
@@ -284,7 +284,7 @@ public class GameController : MonoBehaviour {
             {
                 MakeMove(new Vector2(0, -1));
             }
-            if (Input.GetKeyDown(KeyCode.Space))
+            if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Period))
             {
                 PlaceToken(selectorPos);
                 FinishTurn();
@@ -293,12 +293,9 @@ public class GameController : MonoBehaviour {
             {
                 if(FlipStack(selectorPos))
                 {
-
-                    FlipStack(selectorPos);        
+                    FinishTurn();// FlipStack(selectorPos);        
                 }
-           
             }
-
         }
         
 
