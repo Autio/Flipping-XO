@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.SceneManagement;
 
 public class GameController : MonoBehaviour {
     enum states {starting, playing, moving, ending}
@@ -71,8 +72,6 @@ public class GameController : MonoBehaviour {
 
     }
 
-
-
     void MakeMove(Vector2 dir)
     {
         // move on x-axis
@@ -80,10 +79,8 @@ public class GameController : MonoBehaviour {
         {
             if (selectorPos.x < 4 && selectorPos.x >= 0)
             {
-
                 selectorPos.x += dir.x;
                 selectorPos.x = Mathf.Clamp(selectorPos.x, 0, 3);
-                
             }
         }
         if (dir.y != 0)
@@ -190,11 +187,12 @@ public class GameController : MonoBehaviour {
                 if (t.tilePos == pos)
                 {
                     targetTile = t;
-                    break;
+         
 
                     // highlight tile
                     selectedTileTransform = (Transform)Instantiate(highlightTile, new Vector3(pos.x * tileSize, pos.y * tileSize, 0), Quaternion.identity);
                     selectedTile = t;
+                    break;
                 }
             }
 
@@ -237,19 +235,30 @@ public class GameController : MonoBehaviour {
 
         // place stack, i.e. move from existing location
         // change ownership of tile
-        for (int k = 0; k < selectedTile.tokens.Count; k++)
+        try
         {
-            int yOffset = -3 + k * 2;
+            for (int k = 0; k < selectedTile.tokens.Count; k++)
+            {
+                int yOffset = -3 + k * 2;
 
-            selectedTile.tokens[k].tokenObject.transform.position = new Vector3(pos.x * tileSize, pos.y * tileSize + yOffset, 0);
+                selectedTile.tokens[k].tokenObject.transform.position = new Vector3(pos.x * tileSize, pos.y * tileSize + yOffset, 0);
+
+            }
             targetTile.tokens = selectedTile.tokens;
             targetTile.stack = selectedTile.stack;
-            selectedTile.tokens = null;
+            selectedTile.tokens.Clear();
             selectedTile.stack = 0;
+            // remove highlighted tile
+            Destroy(selectedTileTransform.gameObject);
+
+            // back to game mode
+            state = states.playing;
+
         }
-        // remove highlighted tile
-        Destroy(selectedTileTransform.gameObject);
-              
+        catch
+        {
+            return false;
+        }
         return true;
 
 
@@ -353,6 +362,12 @@ public class GameController : MonoBehaviour {
 
     // Update is called once per frame
 	void Update () {
+        if(Input.GetKeyDown(KeyCode.R))
+        {
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+
+        }
+
 	    if(state == states.playing)
         {
             // Keyboard controls
@@ -384,7 +399,7 @@ public class GameController : MonoBehaviour {
                     FinishTurn();// FlipStack(selectorPos);        
                 }
             }
-
+            
             if (Input.GetKeyDown(KeyCode.M))
             {
                 if (MoveStack(selectorPos))
@@ -394,7 +409,7 @@ public class GameController : MonoBehaviour {
             }
 
         }
-
+        
         if(state == states.moving)
         {
             // Keyboard controls
