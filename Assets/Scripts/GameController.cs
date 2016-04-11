@@ -3,16 +3,18 @@ using System.Collections;
 using System.Collections.Generic;
 
 public class GameController : MonoBehaviour {
-    enum states {starting, playing, ending}
+    enum states {starting, playing, moving, ending}
     int tileSize = 16;
     int player = 1;
-    int playerLimit = 4;
+    public int playerLimit = 4;
     states state = states.playing;
     public Transform[] backgroundTiles = new Transform[2];
     public Transform highlightTile;
     public Transform selector;
     private Vector2 selectorPos;
     private List<tile> tileList = new List<tile>();
+    private Transform selectedTileTransform;
+    private tile selectedTile;
 
     public Transform[] discs = new Transform[4];
     Vector2[] directions = new Vector2[8];
@@ -21,6 +23,8 @@ public class GameController : MonoBehaviour {
     // Use this for initialization
 
     void Start () {
+
+
         directions[0] = new Vector2(0, 1);
         directions[1] = new Vector2(1, 1);
         directions[2] = new Vector2(1, 0);
@@ -168,6 +172,90 @@ public class GameController : MonoBehaviour {
         }
     }
 
+    bool MoveStack(Vector2 pos)
+    {
+        // check in bounds
+        if (!CheckInBounds(pos))
+        {
+            return false;
+        }
+        else
+        {
+
+            tile targetTile = null;
+
+            // find tile in pos
+            foreach (tile t in tileList)
+            {
+                if (t.tilePos == pos)
+                {
+                    targetTile = t;
+                    break;
+
+                    // highlight tile
+                    selectedTileTransform = (Transform)Instantiate(highlightTile, new Vector3(pos.x * tileSize, pos.y * tileSize, 0), Quaternion.identity);
+                    selectedTile = t;
+                }
+            }
+
+            // are there more than one tokens on the stack
+            if (targetTile.tokens.Count < 1)
+            {
+                return false;
+            }
+
+        }
+        return true;
+    }
+
+    bool PlaceStack(Vector2 pos)
+    {
+        // see if valid position
+        // check in bounds
+        if (!CheckInBounds(pos))
+        {
+            return false;
+        }
+
+        tile targetTile = null;
+        // check target tile empty
+        foreach (tile t in tileList)
+        {
+            if (t.tilePos == pos)
+            {
+                targetTile = t;
+                break;
+
+            }
+
+        }
+
+        if(targetTile.stack > 0)
+        {
+            return false;
+        }
+
+        // place stack, i.e. move from existing location
+        // change ownership of tile
+        for (int k = 0; k < selectedTile.tokens.Count; k++)
+        {
+            int yOffset = -3 + k * 2;
+
+            selectedTile.tokens[k].tokenObject.transform.position = new Vector3(pos.x * tileSize, pos.y * tileSize + yOffset, 0);
+            targetTile.tokens = selectedTile.tokens;
+            targetTile.stack = selectedTile.stack;
+            selectedTile.tokens = null;
+            selectedTile.stack = 0;
+        }
+        // remove highlighted tile
+        Destroy(selectedTileTransform.gameObject);
+              
+        return true;
+
+
+        
+    }
+
     void FinishTurn()
     {
         player += 1;
@@ -296,6 +384,44 @@ public class GameController : MonoBehaviour {
                     FinishTurn();// FlipStack(selectorPos);        
                 }
             }
+
+            if (Input.GetKeyDown(KeyCode.M))
+            {
+                if (MoveStack(selectorPos))
+                {
+                    state = states.moving;
+                }
+            }
+
+        }
+
+        if(state == states.moving)
+        {
+            // Keyboard controls
+            if (Input.GetKeyDown(KeyCode.A))
+            {
+                MakeMove(new Vector2(-1, 0));
+            }
+            if (Input.GetKeyDown(KeyCode.D))
+            {
+                MakeMove(new Vector2(1, 0));
+            }
+            if (Input.GetKeyDown(KeyCode.W))
+            {
+                MakeMove(new Vector2(0, 1));
+            }
+            if (Input.GetKeyDown(KeyCode.S))
+            {
+                MakeMove(new Vector2(0, -1));
+            }
+            if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Period))
+            {
+                if (PlaceStack(selectorPos))
+                {
+                    FinishTurn();
+                }
+            }
+
         }
         
 
