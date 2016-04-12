@@ -252,7 +252,8 @@ public class GameController : MonoBehaviour {
             
             Debug.Log("Stack destroyed");
             // back to game mode
-            targetTile.tokens = new List<token>();
+            targetTile.tokens = new List<token>(selectedTile.tokens);
+            selectedTile.tokens.Clear();
             Debug.Log(targetTile.tokens[0].tokenObject.transform.position.x);
             state = states.playing;
 
