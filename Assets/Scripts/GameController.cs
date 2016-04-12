@@ -223,7 +223,6 @@ public class GameController : MonoBehaviour {
             {
                 targetTile = t;
                 break;
-
             }
 
         }
@@ -244,25 +243,30 @@ public class GameController : MonoBehaviour {
                 selectedTile.tokens[k].tokenObject.transform.position = new Vector3(pos.x * tileSize, pos.y * tileSize + yOffset, 0);
 
             }
+            Debug.Log("tiles moved");
             targetTile.tokens = selectedTile.tokens;
             targetTile.stack = selectedTile.stack;
-            selectedTile.tokens.Clear();
+            //selectedTile.tokens;
             selectedTile.stack = 0;
-            // remove highlighted tile
-            Destroy(selectedTileTransform.gameObject);
-
+            Debug.Log("Stacks rejigged");
+            
+            Debug.Log("Stack destroyed");
             // back to game mode
+            targetTile.tokens = new List<token>();
+            Debug.Log(targetTile.tokens[0].tokenObject.transform.position.x);
             state = states.playing;
 
         }
         catch
         {
+            
             return false;
         }
+
+
+        // remove highlighted tile
+        selectedTileTransform.gameObject.SetActive(false) ;
         return true;
-
-
-        
     }
 
     void FinishTurn()
