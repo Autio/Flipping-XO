@@ -12,6 +12,7 @@ public class GameController : MonoBehaviour {
     public Transform[] backgroundTiles = new Transform[2];
     public Transform highlightTile;
     public Transform selector;
+    public Sprite[] selectorSprites = new Sprite[5];
     private Vector2 selectorPos;
     private List<tile> tileList = new List<tile>();
     private Transform selectedTileTransform;
@@ -55,7 +56,10 @@ public class GameController : MonoBehaviour {
                 tileList.Add(newTile);
             }
         }
-	}
+
+        // update selector sprite
+        selector.FindChild("Selector1").GetComponent<SpriteRenderer>().sprite = selectorSprites[player];
+    }
 
     class tile
     {
@@ -95,7 +99,7 @@ public class GameController : MonoBehaviour {
         selector.transform.position = new Vector3(selectorPos.x * tileSize, selectorPos.y * tileSize, 0);
     }
 	
-    void PlaceToken(Vector2 pos)
+    bool PlaceToken(Vector2 pos)
     {
         // find right tile
         tile targetTile = null;
@@ -120,8 +124,9 @@ public class GameController : MonoBehaviour {
 
             targetTile.tokens.Add(tok);
             targetTile.stack += 1;
+            return true;
         }
-        
+        return false;
     }
 
     bool FlipStack(Vector2 pos)
@@ -278,6 +283,9 @@ public class GameController : MonoBehaviour {
             player = 1;
         }
 
+        // update selector sprite
+        selector.FindChild("Selector1").GetComponent<SpriteRenderer>().sprite = selectorSprites[player];
+
         CheckEnd();
     }
 
@@ -394,8 +402,10 @@ public class GameController : MonoBehaviour {
             }
             if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Period))
             {
-                PlaceToken(selectorPos);
-                FinishTurn();
+                if (PlaceToken(selectorPos))
+                {
+                    FinishTurn();
+                }
             }
             if(Input.GetKeyDown(KeyCode.F))
             {
