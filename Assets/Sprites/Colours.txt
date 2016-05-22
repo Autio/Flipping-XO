@@ -1,0 +1,15 @@
+Blue  225DEA
+BlueDark  03309A
+
+Red   DC1717
+RedDark  640C0C
+
+Yellow  D1D40E
+YellowDark  BF4300
+
+Green  17DC18
+GreenDark   064C06
+
+Highlighted  99D9EA
+
+SelectorFrameGray 8E8E8E
