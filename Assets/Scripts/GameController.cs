@@ -42,6 +42,10 @@ public class GameController : MonoBehaviour {
             for (int j = 0; j < 4; j++)
             {
                 tile newTile = new tile();
+                for (int i = 0; i < 4; i++)
+                {
+                    newTile.moveWeights[i] = -1;
+                }
                 Transform t;
                 if (i % 2 == 0 && j % 2 == 1 || i % 2 == 1 && j % 2 == 0)
                 {
@@ -67,6 +71,8 @@ public class GameController : MonoBehaviour {
         public int stack;
         public Transform tileObject;
         public List<token> tokens = new List<token>();
+        // value for each player
+        public int[] moveWeights = new int[4];
     }
 
     class token
@@ -373,6 +379,58 @@ public class GameController : MonoBehaviour {
         state = states.ending;
     }
 
+    void UpdateBoardValues()
+    {
+        // update the weightings of each tile on the board for each player based on some heuristics
+
+        // things to take into account:
+        // is there an imminent victory about to happen? player order matters here
+        // bottom and top tiles in stacks
+        // gaps in threes
+        // how to mark that flipping the stack is the right move?
+        // how to mark that moving the stack is the right move? 
+
+
+        // move values from 1 to 10, if 10 it's a winning move
+        // the number should denote which tiles to pay attention to
+        // when checking: if you yourself don't have a 10, check the next person and block their 10
+
+        // cycle through all tiles
+
+       
+
+        // view neighbouring tiles, if they are present
+
+        // awareness of top and bottom tile
+
+        // 
+        foreach (tile t in tileList)
+        {
+            // check all neighbours within board bounds
+            for (int d = 0; d < directions.Length; d++)
+            {
+                if(CheckInBounds(t.tilePos + directions[d]))
+                {
+                    // cycle through all players
+                    for (int p = 1; p <= playerLimit; p++)
+                    {
+                        // look at topmost token
+                        if(t.tokens[t.tokens.Count].ownerPlayer = p)
+                        {
+
+                        }
+
+                        // look at bottommost token, if not the top one
+
+                    }
+                }
+            }
+
+        }
+        
+
+    }
+
     // Update is called once per frame
 	void Update () {
         if(Input.GetKeyDown(KeyCode.R))
@@ -456,4 +514,14 @@ public class GameController : MonoBehaviour {
         
 
 	}
+
+    // AI 
+    public void AI_move()
+    {
+        // think about best move
+
+        // 
+
+
+    }
 }
