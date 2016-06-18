@@ -90,8 +90,11 @@ public class GameController : MonoBehaviour {
 
         // AI heatmap
         InitialBoardValues();
+
         ToggleHeatmap(false);
 
+
+        UpdateActionSprite();
     }
 
     class tile
@@ -114,8 +117,27 @@ public class GameController : MonoBehaviour {
     void UpdateActionSprite()
     {
         // switch all action sprites off
+
+
         // check current move type to determine which sprite to activate 
+        if(currentMove == moves.place)
+        {
+           
+                ActionSprite.GetComponent<SpriteRenderer>().sprite = placeArrowSprites[player - 1];
+         
+        } else if (currentMove == moves.flip)
+        {
+            ActionSprite.GetComponent<SpriteRenderer>().sprite = flipSprites[player - 1];
+
+        } else if (currentMove == moves.place)
+        {
+
+            ActionSprite.GetComponent<SpriteRenderer>().sprite = moveStackSprites[player - 1];
+
+        }
+
         // check player number to determine colour
+
 
     }
 
@@ -571,6 +593,7 @@ public class GameController : MonoBehaviour {
         if(Input.GetKeyDown(KeyCode.U))
         {
             ToggleHeatmap(false);
+            UpdateActionSprite();
         }
 
 	    if(state == states.playing)
