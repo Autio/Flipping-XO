@@ -411,8 +411,8 @@ public class GameController : MonoBehaviour {
     void DrawDebugHeatmap()
     {
         Color colorStart = Color.gray;
-        Color colorEnd = Color.green;
-        Color colorStart2 = Color.green;
+        Color colorEnd = Color.yellow;
+        Color colorStart2 = Color.yellow;
         Color colorEnd2 = Color.red;
         // AI move valuation heatmap
         // go through grid
@@ -424,25 +424,29 @@ public class GameController : MonoBehaviour {
             {
                 if(t.tilePos == dt.tilePos)
                 {
-                    float lerp;
+                    float lerp = 0.0f;
                     int moveWeight = t.moveWeights[player - 1];
                     if (moveWeight > -1 && moveWeight < 6)
                     {
                         // 1 to 5 should go from 0.2 to 1.0
-                        lerp = moveWeight / 10 * 2;
+                        lerp = moveWeight / 10.0f * 2.0f;
+                        Debug.Log("moveweight " + moveWeight);
                         Debug.Log("first lerp " + lerp);
+                        dt.tileObject.FindChild("debugTile").GetComponent<Renderer>().material.color = Color.Lerp(colorStart, colorEnd, lerp);
                     } 
-                    else
+                    else if (moveWeight > 5)
                     {
                         // 6 to 10 should also go from 0.2 to 1.0
-                        lerp = (moveWeight - 5) / 10 * 2;
+                        lerp = (moveWeight - 5.0f) / 10.0f * 2.0f;
                         // 6 / 20 = 3 / 10 = 0.3
+                        Debug.Log("moveweight " + moveWeight);
                         Debug.Log("second lerp " + lerp);
-                        
+                        dt.tileObject.FindChild("debugTile").GetComponent<Renderer>().material.color = Color.Lerp(colorStart2, colorEnd2, lerp);
+
                     }
                     
 
-                    dt.tileObject.FindChild("debugTile").GetComponent<Renderer>().material.color = Color.Lerp(colorStart, colorEnd, lerp); 
+                   
                 }
             }
 
@@ -472,11 +476,11 @@ public class GameController : MonoBehaviour {
             {
                 if(isEdge)
                 {
-                    t.moveWeights[p] = 1;
+                    t.moveWeights[p] = 4;
                 }
                 else
                 {
-                    t.moveWeights[p] = 9;
+                    t.moveWeights[p] = 10;
                 }
             }
         }
