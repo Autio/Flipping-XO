@@ -10,11 +10,13 @@ public class GameController : MonoBehaviour {
     public int playerLimit = 4;
     states state = states.playing;
     public Transform[] backgroundTiles = new Transform[2];
+    public Transform debugTile;
     public Transform highlightTile;
     public Transform selector;
     public Sprite[] selectorSprites = new Sprite[5];
     private Vector2 selectorPos;
     private List<tile> tileList = new List<tile>();
+    private List<tile> debugTileList = new List<tile>();
     private Transform selectedTileTransform;
     private tile selectedTile;
 
@@ -37,16 +39,22 @@ public class GameController : MonoBehaviour {
         directions[7] = new Vector2(-1, 1);
 
         selectorPos = new Vector2(0, 0);
+
+        GameObject tileHolder = GameObject.Find("TileHolder");
         for (int i = 0; i < 4; i++)
         {
             for (int j = 0; j < 4; j++)
             {
                 tile newTile = new tile();
-                for (int i = 0; i < 4; i++)
+                tile newDebugTile = new tile();
+
+                // AI - set initial move weights to -1 for all tiles
+                for (int p = 0; p < 4; p++)
                 {
-                    newTile.moveWeights[i] = -1;
+                    newTile.moveWeights[p] = -1;
                 }
-                Transform t;
+
+                Transform t, dt;
                 if (i % 2 == 0 && j % 2 == 1 || i % 2 == 1 && j % 2 == 0)
                 {
                     t = (Transform)Instantiate(backgroundTiles[0], new Vector2(i * tileSize, j * tileSize), Quaternion.identity);
@@ -55,9 +63,16 @@ public class GameController : MonoBehaviour {
                 {
                     t = (Transform)Instantiate(backgroundTiles[1], new Vector2(i * tileSize, j * tileSize), Quaternion.identity);
                 }
+                dt = (Transform)Instantiate(debugTile, new Vector2(i * tileSize, j * tileSize), Quaternion.identity);
                 newTile.tileObject = t;
                 newTile.tilePos = new Vector2(i, j);
+                newDebugTile.tileObject = dt;
+                newDebugTile.tilePos = new Vector2(i, j);
                 tileList.Add(newTile);
+                debugTileList.Add(newDebugTile);
+
+                t.SetParent(tileHolder.transform);
+                dt.SetParent(tileHolder.transform);
             }
         }
 
@@ -379,9 +394,50 @@ public class GameController : MonoBehaviour {
         state = states.ending;
     }
 
+    void ToggleHeatmap(bool on)
+    {
+            foreach (tile t in debugTileList)
+            {
+                t.tileObject.gameObject.SetActive(on);
+            }
+
+    }
+
+    void DrawDebugHeatmap()
+    {
+        Color colorStart = Color.green;
+        Color colorEnd = Color.red;
+        // AI move valuation heatmap
+        // go through grid
+        // read active player
+        // adjust transparent squares based on value in tile weight for that player number
+        foreach(tile t in tileList)
+        {
+            foreach(tile dt in debugTileList)
+            {
+                if(t.tilePos == dt.tilePos)
+                {
+                    float lerp;
+                    lerp = Random.Range(0.0f, 1.0f);
+                    dt.tileObject.FindChild("debugTile").GetComponent<Renderer>().material.color = Color.Lerp(colorStart, colorEnd, lerp); 
+                }
+            }
+
+
+        }
+
+
+
+
+
+    }
+
+
     void UpdateBoardValues()
     {
         // update the weightings of each tile on the board for each player based on some heuristics
+
+        // have some kind of debug mode which shows the heatmap of valuable moves by player
 
         // things to take into account:
         // is there an imminent victory about to happen? player order matters here
@@ -415,7 +471,7 @@ public class GameController : MonoBehaviour {
                     for (int p = 1; p <= playerLimit; p++)
                     {
                         // look at topmost token
-                        if(t.tokens[t.tokens.Count].ownerPlayer = p)
+                        if(t.tokens[t.tokens.Count].ownerPlayer == p)
                         {
 
                         }
@@ -437,6 +493,15 @@ public class GameController : MonoBehaviour {
         {
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
 
+        }
+        if(Input.GetKeyDown(KeyCode.Y))
+        {
+            ToggleHeatmap(true);
+            DrawDebugHeatmap();
+        } 
+        if(Input.GetKeyDown(KeyCode.U))
+        {
+            ToggleHeatmap(false);
         }
 
 	    if(state == states.playing)
