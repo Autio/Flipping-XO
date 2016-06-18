@@ -123,13 +123,13 @@ public class GameController : MonoBehaviour {
         if(currentMove == moves.place)
         {
            
-                ActionSprite.GetComponent<SpriteRenderer>().sprite = placeArrowSprites[player - 1];
+            ActionSprite.GetComponent<SpriteRenderer>().sprite = placeArrowSprites[player - 1];
          
         } else if (currentMove == moves.flip)
         {
             ActionSprite.GetComponent<SpriteRenderer>().sprite = flipSprites[player - 1];
 
-        } else if (currentMove == moves.place)
+        } else if (currentMove == moves.move)
         {
 
             ActionSprite.GetComponent<SpriteRenderer>().sprite = moveStackSprites[player - 1];
@@ -191,6 +191,26 @@ public class GameController : MonoBehaviour {
             targetTile.stack += 1;
             return true;
         }
+        return false;
+    }
+
+    bool DoAction(Vector2 pos)
+    {
+        if(currentMove == moves.place)
+        {
+            if(PlaceToken(pos))
+            {
+                return true;
+            }
+        } 
+        if(currentMove == moves.flip)
+        {
+            if(FlipStack(pos))
+            {
+                return true;
+            }
+        }
+
         return false;
     }
 
@@ -258,7 +278,6 @@ public class GameController : MonoBehaviour {
                 {
                     targetTile = t;
          
-
                     // highlight tile
                     selectedTileTransform = (Transform)Instantiate(highlightTile, new Vector3(pos.x * tileSize, pos.y * tileSize, 0), Quaternion.identity);
                     selectedTile = t;
@@ -316,11 +335,9 @@ public class GameController : MonoBehaviour {
             Debug.Log("tiles moved");
             targetTile.tokens = selectedTile.tokens;
             targetTile.stack = selectedTile.stack;
-            //selectedTile.tokens;
+
             selectedTile.stack = 0;
-            Debug.Log("Stacks rejigged");
-            
-            Debug.Log("Stack destroyed");
+
             // back to game mode
             targetTile.tokens = new List<token>(selectedTile.tokens);
             selectedTile.tokens.Clear();
@@ -348,9 +365,9 @@ public class GameController : MonoBehaviour {
             player = 1;
         }
 
-        // update selector sprite
+        // update selector sprite and action sprite
         selector.FindChild("Selector1").GetComponent<SpriteRenderer>().sprite = selectorSprites[player];
-
+        UpdateActionSprite();
         CheckEnd();
     }
 
@@ -578,6 +595,24 @@ public class GameController : MonoBehaviour {
 
     }
 
+    void ChangeCurrentMove()
+    {
+        if (currentMove == moves.place)
+        {
+            currentMove = moves.flip;
+        }
+        else if (currentMove == moves.flip)
+        {
+            currentMove = moves.move;
+        }
+        else if (currentMove == moves.move)
+        {
+            currentMove = moves.place;
+        }
+
+        UpdateActionSprite();
+    }
+
     // Update is called once per frame
 	void Update () {
         if(Input.GetKeyDown(KeyCode.R))
@@ -615,27 +650,27 @@ public class GameController : MonoBehaviour {
             {
                 MakeMove(new Vector2(0, -1));
             }
-            if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Period))
+            if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.Period))
             {
-                if (PlaceToken(selectorPos))
+                if (currentMove != moves.move)
                 {
-                    FinishTurn();
+                    if (DoAction(selectorPos))
+                    {
+                        FinishTurn();
+                    }
+                }
+                else if (currentMove == moves.move)
+                {
+                    if (MoveStack(selectorPos))
+                    {
+                        state = states.moving;
+                    }
                 }
             }
-            if(Input.GetKeyDown(KeyCode.F))
+            if (Input.GetKeyDown(KeyCode.Space))
             {
-                if(FlipStack(selectorPos))
-                {
-                    FinishTurn();// FlipStack(selectorPos);        
-                }
-            }
-            
-            if (Input.GetKeyDown(KeyCode.M))
-            {
-                if (MoveStack(selectorPos))
-                {
-                    state = states.moving;
-                }
+                // switch between move types
+                ChangeCurrentMove();
             }
 
         }
@@ -659,12 +694,20 @@ public class GameController : MonoBehaviour {
             {
                 MakeMove(new Vector2(0, -1));
             }
-            if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Period))
+            if (Input.GetKeyDown(KeyCode.Return))
             {
                 if (PlaceStack(selectorPos))
                 {
                     FinishTurn();
                 }
+            }
+            if (Input.GetKeyDown(KeyCode.Space))
+            {
+                // back to game mode
+                Destroy(selectedTileTransform.gameObject, 0.1f);
+                ChangeCurrentMove();
+                state = states.playing;
+
             }
 
         }
