@@ -2,9 +2,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.SceneManagement;
+using System.Linq;
 
 public class GameController : MonoBehaviour {
-    enum states {starting, playing, moving, ending}
+    enum states {starting, playing, moving, transitioning, ending}
     enum moves { place, flip, move}
     int tileSize = 16;
     int player = 1;
@@ -358,8 +359,12 @@ public class GameController : MonoBehaviour {
         return true;
     }
 
-    void FinishTurn()
+    IEnumerator FinishTurn()
     {
+        // delay
+        state = states.transitioning;
+        yield return new WaitForSeconds(0.5f);
+
         player += 1;
         if(player > playerLimit)
         {
@@ -370,6 +375,8 @@ public class GameController : MonoBehaviour {
         selector.FindChild("Selector1").GetComponent<SpriteRenderer>().sprite = selectorSprites[player];
         UpdateActionSprite();
         CheckEnd();
+
+        state = states.playing;
     }
 
     bool CheckInBounds(Vector2 pos)
@@ -642,6 +649,10 @@ public class GameController : MonoBehaviour {
             ToggleHeatmap(false);
             UpdateActionSprite();
         }
+        if(Input.GetKeyDown(KeyCode.H))
+        {
+            AI_move();
+        }
 
 	    if(state == states.playing)
         {
@@ -672,7 +683,7 @@ public class GameController : MonoBehaviour {
                     {
                         if (DoAction(selectorPos))
                         {
-                            FinishTurn();
+                            StartCoroutine("FinishTurn");
                         }
                     }
                     else if (currentMove == moves.move)
@@ -693,7 +704,7 @@ public class GameController : MonoBehaviour {
             {
                 // AI player active
                 Debug.Log("AI player moving");
-                FinishTurn();
+                StartCoroutine("FinishTurn");
 
 
             }
@@ -724,7 +735,7 @@ public class GameController : MonoBehaviour {
                 {
                     if (PlaceStack(selectorPos))
                     {
-                        FinishTurn();
+                        StartCoroutine("FinishTurn");
                     }
                 }
                 if (Input.GetKeyDown(KeyCode.Space))
@@ -749,11 +760,42 @@ public class GameController : MonoBehaviour {
 
     // AI 
     public void AI_move()
-    {
+    { 
+        int[] tileChoiceWeights = new int[4];
+        tile[] tileChoices = new tile[4];
+        
+        foreach (tile f in tileList)
+        {
+            Debug.Log("unsorted tile list: tile " + f.tilePos + " " + f.moveWeights[0]);
+        }
+
+        tileList = tileList.OrderBy(tile => tile.moveWeights).ToList();
+
+        foreach (tile f in tileList)
+        {
+            Debug.Log("sorted tile list: tile " + f.tilePos + " " + f.moveWeights[0]);
+        }
+
         // think about best move
+        // look through tiles and update array of moves to choose from
+        // question of sorting - so could be optimised
+        foreach (tile t in tileList)
+        {
+            for (int a = 0; a < tileChoiceWeights.Length; a++)
+            {
+                if (t.moveWeights[player - 1] > tileChoiceWeights[a])
+                {
+                    tileChoices[a] = t;
+                    tileChoiceWeights[a] = t.moveWeights[player - 1];
+                }
+            }
 
-        // 
+        }
 
+
+        // choose move
+        
+        // execute move 
 
     }
 }
