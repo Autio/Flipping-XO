@@ -5,16 +5,23 @@ using UnityEngine.SceneManagement;
 
 public class GameController : MonoBehaviour {
     enum states {starting, playing, moving, ending}
+    enum moves { place, flip, move}
     int tileSize = 16;
     int player = 1;
     public int playerLimit = 4;
     states state = states.playing;
+    moves currentMove = moves.place;
     public Transform[] backgroundTiles = new Transform[2];
     public Transform debugTile;
     public Transform highlightTile;
     public Transform selector;
     public Sprite[] selectorSprites = new Sprite[5];
     private Vector2 selectorPos;
+    public Sprite[] placeArrowSprites = new Sprite[4];
+    public Sprite[] flipSprites = new Sprite[4];
+    public Sprite[] moveStackSprites = new Sprite[4];
+    public Transform ActionSprite;
+
     private List<tile> tileList = new List<tile>();
     private List<tile> debugTileList = new List<tile>();
     private Transform selectedTileTransform;
@@ -27,7 +34,6 @@ public class GameController : MonoBehaviour {
     // Use this for initialization
 
     void Start () {
-
 
         directions[0] = new Vector2(0, 1);
         directions[1] = new Vector2(1, 1);
@@ -78,6 +84,9 @@ public class GameController : MonoBehaviour {
 
         // update selector sprite
         selector.FindChild("Selector1").GetComponent<SpriteRenderer>().sprite = selectorSprites[player];
+        // update which action sprite is shown, type and colour
+        UpdateActionSprite();
+
 
         // AI heatmap
         InitialBoardValues();
@@ -99,6 +108,14 @@ public class GameController : MonoBehaviour {
     {
         public Transform tokenObject;
         public int ownerPlayer;
+
+    }
+
+    void UpdateActionSprite()
+    {
+        // switch all action sprites off
+        // check current move type to determine which sprite to activate 
+        // check player number to determine colour
 
     }
 
@@ -476,11 +493,11 @@ public class GameController : MonoBehaviour {
             {
                 if(isEdge)
                 {
-                    t.moveWeights[p] = 4;
+                    t.moveWeights[p] = 1;
                 }
                 else
                 {
-                    t.moveWeights[p] = 10;
+                    t.moveWeights[p] = 2;
                 }
             }
         }
@@ -506,8 +523,6 @@ public class GameController : MonoBehaviour {
         // when checking: if you yourself don't have a 10, check the next person and block their 10
 
         // cycle through all tiles
-
-       
 
         // view neighbouring tiles, if they are present
 
