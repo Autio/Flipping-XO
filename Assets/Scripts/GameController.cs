@@ -78,6 +78,11 @@ public class GameController : MonoBehaviour {
 
         // update selector sprite
         selector.FindChild("Selector1").GetComponent<SpriteRenderer>().sprite = selectorSprites[player];
+
+        // AI heatmap
+        InitialBoardValues();
+        ToggleHeatmap(false);
+
     }
 
     class tile
@@ -450,6 +455,33 @@ public class GameController : MonoBehaviour {
 
     }
 
+    void InitialBoardValues()
+    {
+        // edge tiles have a value of 1, core tiles more
+        foreach (tile t in tileList)
+        {
+            bool isEdge = false;
+            foreach (Vector2 d in directions)
+            {
+                if(!CheckInBounds(t.tilePos + d))
+                {
+                    isEdge = true;
+                }
+            }
+            for (int p = 0; p < playerLimit; p++)
+            {
+                if(isEdge)
+                {
+                    t.moveWeights[p] = 1;
+                }
+                else
+                {
+                    t.moveWeights[p] = 9;
+                }
+            }
+        }
+
+    }
 
     void UpdateBoardValues()
     {
