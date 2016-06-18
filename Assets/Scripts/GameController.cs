@@ -704,7 +704,8 @@ public class GameController : MonoBehaviour {
             {
                 // AI player active
                 Debug.Log("AI player moving");
-                StartCoroutine("FinishTurn");
+                AI_move();
+                //StartCoroutine("FinishTurn");
 
 
             }
@@ -793,7 +794,7 @@ public class GameController : MonoBehaviour {
 
     IEnumerator MakeAIMove(tile chosenTile, moves moveChoice)
     {
-        
+        Debug.Log("AI aiming to go to " + chosenTile.tilePos.x + ", " + chosenTile.tilePos.y);
         float defaultWait = 0.2f;
         state = states.transitioning;
         yield return new WaitForSeconds(defaultWait);
@@ -803,20 +804,39 @@ public class GameController : MonoBehaviour {
         {
             if (chosenTile.tilePos == selectorPos)
             {
+                Debug.Log("AI target tile reached");
                 targetReached = true;
                 // in the right tile, so make the right move
                 yield return new WaitForSeconds(defaultWait);
                 currentMove = moveChoice;
                 UpdateActionSprite();
+                yield return new WaitForSeconds(defaultWait);
+                if (currentMove != moves.move)
+                {
+                    if (DoAction(selectorPos))
+                    {
+                        Debug.Log("AI " + player + " move made");
+                    }
+                }
+                else if (currentMove == moves.move)
+                {
+                    // Do something clever for actually moving stacks...
+                    if (MoveStack(selectorPos))
+                    {
+                        state = states.moving;
+                    }
+                }
 
             }
             else
             {
                 // figure out x and y differences
-                int xDiff = (int)(chosenTile.tilePos.x - selectorPos.x);
-                int yDiff = (int)(chosenTile.tilePos.y - selectorPos.y);
+                int xDiff = (int)(selectorPos.x - chosenTile.tilePos.x);
+                int yDiff = (int)(selectorPos.y - chosenTile.tilePos.y);
+                Debug.Log("xDiff " + xDiff + ", yDiff " + yDiff); 
 
                 // make appropriate move and then wait
+                Debug.Log("Making move...");
                 if (xDiff < 0)
                 {
                     MakeMove(new Vector2(1, 0));
@@ -834,7 +854,7 @@ public class GameController : MonoBehaviour {
                 }
            
                 yield return new WaitForSeconds(defaultWait);
-                
+                Debug.Log("selector pos " + selectorPos);
 
             }
         }
