@@ -9,6 +9,7 @@ public class GameController : MonoBehaviour {
     int tileSize = 16;
     int player = 1;
     public int playerLimit = 4;
+    public int humanPlayers = 1; // others are AI
     states state = states.playing;
     moves currentMove = moves.place;
     public Transform[] backgroundTiles = new Transform[2];
@@ -613,8 +614,19 @@ public class GameController : MonoBehaviour {
         UpdateActionSprite();
     }
 
+    bool HumanPlayerActive()
+    {
+        // if the player number is greater than the amount of human players in the game, and there are more players than there are human players, then it must be an AI
+        if (player > humanPlayers && player <= playerLimit)
+        {
+            return false;
+        }
+        return true;
+    }
+
     // Update is called once per frame
 	void Update () {
+        // work whether or not active player is human
         if(Input.GetKeyDown(KeyCode.R))
         {
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
@@ -633,80 +645,100 @@ public class GameController : MonoBehaviour {
 
 	    if(state == states.playing)
         {
-            // Keyboard controls
-            if(Input.GetKeyDown(KeyCode.A))
+            // only if human
+            if (HumanPlayerActive())
             {
-                MakeMove(new Vector2(-1, 0));
-            }
-            if (Input.GetKeyDown(KeyCode.D))
-            {
-                MakeMove(new Vector2(1, 0));
-            } 
-            if (Input.GetKeyDown(KeyCode.W))
-            {
-                MakeMove(new Vector2(0, 1));
-            } 
-            if (Input.GetKeyDown(KeyCode.S))
-            {
-                MakeMove(new Vector2(0, -1));
-            }
-            if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.Period))
-            {
-                if (currentMove != moves.move)
-                {
-                    if (DoAction(selectorPos))
-                    {
-                        FinishTurn();
-                    }
-                }
-                else if (currentMove == moves.move)
-                {
-                    if (MoveStack(selectorPos))
-                    {
-                        state = states.moving;
-                    }
-                }
-            }
-            if (Input.GetKeyDown(KeyCode.Space))
-            {
-                // switch between move types
-                ChangeCurrentMove();
-            }
 
+                // Keyboard controls
+                if (Input.GetKeyDown(KeyCode.A))
+                {
+                    MakeMove(new Vector2(-1, 0));
+                }
+                if (Input.GetKeyDown(KeyCode.D))
+                {
+                    MakeMove(new Vector2(1, 0));
+                }
+                if (Input.GetKeyDown(KeyCode.W))
+                {
+                    MakeMove(new Vector2(0, 1));
+                }
+                if (Input.GetKeyDown(KeyCode.S))
+                {
+                    MakeMove(new Vector2(0, -1));
+                }
+                if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.Period))
+                {
+                    if (currentMove != moves.move)
+                    {
+                        if (DoAction(selectorPos))
+                        {
+                            FinishTurn();
+                        }
+                    }
+                    else if (currentMove == moves.move)
+                    {
+                        if (MoveStack(selectorPos))
+                        {
+                            state = states.moving;
+                        }
+                    }
+                }
+                if (Input.GetKeyDown(KeyCode.Space))
+                {
+                    // switch between move types
+                    ChangeCurrentMove();
+                }
+            }
+            else
+            {
+                // AI player active
+                Debug.Log("AI player moving");
+                FinishTurn();
+
+
+            }
         }
         
         if(state == states.moving)
         {
-            // Keyboard controls
-            if (Input.GetKeyDown(KeyCode.A))
+            if (HumanPlayerActive())
             {
-                MakeMove(new Vector2(-1, 0));
-            }
-            if (Input.GetKeyDown(KeyCode.D))
-            {
-                MakeMove(new Vector2(1, 0));
-            }
-            if (Input.GetKeyDown(KeyCode.W))
-            {
-                MakeMove(new Vector2(0, 1));
-            }
-            if (Input.GetKeyDown(KeyCode.S))
-            {
-                MakeMove(new Vector2(0, -1));
-            }
-            if (Input.GetKeyDown(KeyCode.Return))
-            {
-                if (PlaceStack(selectorPos))
+                // Keyboard controls
+                if (Input.GetKeyDown(KeyCode.A))
                 {
-                    FinishTurn();
+                    MakeMove(new Vector2(-1, 0));
+                }
+                if (Input.GetKeyDown(KeyCode.D))
+                {
+                    MakeMove(new Vector2(1, 0));
+                }
+                if (Input.GetKeyDown(KeyCode.W))
+                {
+                    MakeMove(new Vector2(0, 1));
+                }
+                if (Input.GetKeyDown(KeyCode.S))
+                {
+                    MakeMove(new Vector2(0, -1));
+                }
+                if (Input.GetKeyDown(KeyCode.Return))
+                {
+                    if (PlaceStack(selectorPos))
+                    {
+                        FinishTurn();
+                    }
+                }
+                if (Input.GetKeyDown(KeyCode.Space))
+                {
+                    // back to game mode
+                    Destroy(selectedTileTransform.gameObject, 0.1f);
+                    ChangeCurrentMove();
+                    state = states.playing;
+
                 }
             }
-            if (Input.GetKeyDown(KeyCode.Space))
+            else
             {
-                // back to game mode
-                Destroy(selectedTileTransform.gameObject, 0.1f);
-                ChangeCurrentMove();
-                state = states.playing;
+
 
             }
 
