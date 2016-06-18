@@ -798,16 +798,47 @@ public class GameController : MonoBehaviour {
         state = states.transitioning;
         yield return new WaitForSeconds(defaultWait);
         // is current tile the right tile? 
-        if (chosenTile.tilePos == selectorPos)
+        bool targetReached = false;
+        while (!targetReached)
         {
-            // in the right tile, so make the right move
-            yield return new WaitForSeconds(defaultWait);
-            currentMove = moveChoice;
-            UpdateActionSprite();
+            if (chosenTile.tilePos == selectorPos)
+            {
+                targetReached = true;
+                // in the right tile, so make the right move
+                yield return new WaitForSeconds(defaultWait);
+                currentMove = moveChoice;
+                UpdateActionSprite();
 
+            }
+            else
+            {
+                // figure out x and y differences
+                int xDiff = (int)(chosenTile.tilePos.x - selectorPos.x);
+                int yDiff = (int)(chosenTile.tilePos.y - selectorPos.y);
+
+                // make appropriate move and then wait
+                if (xDiff < 0)
+                {
+                    MakeMove(new Vector2(1, 0));
+                }
+                else if(xDiff > 0)
+                {
+                    MakeMove(new Vector2(-1, 0));
+                }
+                else if(yDiff < 0)
+                {
+                    MakeMove(new Vector2(0, 1));
+                } else if (yDiff > 0)
+                {
+                    MakeMove(new Vector2(0, -1));
+                }
+           
+                yield return new WaitForSeconds(defaultWait);
+                
+
+            }
         }
-        // make move towards target tile
+        StartCoroutine("FinishTurn");
         
-
     }
 }
