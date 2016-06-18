@@ -760,42 +760,54 @@ public class GameController : MonoBehaviour {
 
     // AI 
     public void AI_move()
-    { 
-        int[] tileChoiceWeights = new int[4];
-        tile[] tileChoices = new tile[4];
-        
-        foreach (tile f in tileList)
+    {
+        tile chosenTile;
+
+        // use Linq to order tile selection
+        List<tile> sortedTiles= tileList.OrderByDescending(t=>t.moveWeights[player - 1]).ToList();
+
+        foreach (tile f in sortedTiles)
         {
-            Debug.Log("unsorted tile list: tile " + f.tilePos + " " + f.moveWeights[0]);
+            Debug.Log("sorted tile list: tile " + f.tilePos + " " + f.moveWeights[player - 1]);
         }
 
-        tileList = tileList.OrderBy(tile => tile.moveWeights).ToList();
+        // how many of the best moves will you consider?
+        int movesToConsider = 4;
 
-        foreach (tile f in tileList)
-        {
-            Debug.Log("sorted tile list: tile " + f.tilePos + " " + f.moveWeights[0]);
-        }
-
-        // think about best move
-        // look through tiles and update array of moves to choose from
-        // question of sorting - so could be optimised
-        foreach (tile t in tileList)
-        {
-            for (int a = 0; a < tileChoiceWeights.Length; a++)
-            {
-                if (t.moveWeights[player - 1] > tileChoiceWeights[a])
-                {
-                    tileChoices[a] = t;
-                    tileChoiceWeights[a] = t.moveWeights[player - 1];
-                }
-            }
-
-        }
-
+        // choose the best move with a high likelyhood
+        float choiceBias = 0.9f;
 
         // choose move
-        
+        if(Random.Range(0.0f, 1.0f) < choiceBias)
+        {
+            chosenTile = sortedTiles[0];
+        } else
+        {
+            chosenTile = sortedTiles[Random.Range(1, movesToConsider)];
+        }
+
         // execute move 
+        StartCoroutine(MakeAIMove(chosenTile, moves.place));
+
+    }
+
+    IEnumerator MakeAIMove(tile chosenTile, moves moveChoice)
+    {
+        
+        float defaultWait = 0.2f;
+        state = states.transitioning;
+        yield return new WaitForSeconds(defaultWait);
+        // is current tile the right tile? 
+        if (chosenTile.tilePos == selectorPos)
+        {
+            // in the right tile, so make the right move
+            yield return new WaitForSeconds(defaultWait);
+            currentMove = moveChoice;
+            UpdateActionSprite();
+
+        }
+        // make move towards target tile
+        
 
     }
 }
