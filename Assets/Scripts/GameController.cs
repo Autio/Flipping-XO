@@ -405,8 +405,10 @@ public class GameController : MonoBehaviour {
 
     void DrawDebugHeatmap()
     {
-        Color colorStart = Color.green;
-        Color colorEnd = Color.red;
+        Color colorStart = Color.gray;
+        Color colorEnd = Color.green;
+        Color colorStart2 = Color.green;
+        Color colorEnd2 = Color.red;
         // AI move valuation heatmap
         // go through grid
         // read active player
@@ -418,7 +420,23 @@ public class GameController : MonoBehaviour {
                 if(t.tilePos == dt.tilePos)
                 {
                     float lerp;
-                    lerp = Random.Range(0.0f, 1.0f);
+                    int moveWeight = t.moveWeights[player - 1];
+                    if (moveWeight > -1 && moveWeight < 6)
+                    {
+                        // 1 to 5 should go from 0.2 to 1.0
+                        lerp = moveWeight / 10 * 2;
+                        Debug.Log("first lerp " + lerp);
+                    } 
+                    else
+                    {
+                        // 6 to 10 should also go from 0.2 to 1.0
+                        lerp = (moveWeight - 5) / 10 * 2;
+                        // 6 / 20 = 3 / 10 = 0.3
+                        Debug.Log("second lerp " + lerp);
+                        
+                    }
+                    
+
                     dt.tileObject.FindChild("debugTile").GetComponent<Renderer>().material.color = Color.Lerp(colorStart, colorEnd, lerp); 
                 }
             }
