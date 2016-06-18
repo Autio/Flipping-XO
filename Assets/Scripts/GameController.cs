@@ -374,9 +374,10 @@ public class GameController : MonoBehaviour {
         // update selector sprite and action sprite
         selector.FindChild("Selector1").GetComponent<SpriteRenderer>().sprite = selectorSprites[player];
         UpdateActionSprite();
-        CheckEnd();
-
-        state = states.playing;
+        if (!CheckEnd())
+        {
+            state = states.playing;
+        }
     }
 
     bool CheckInBounds(Vector2 pos)
@@ -390,7 +391,7 @@ public class GameController : MonoBehaviour {
         }
     }
 
-    void CheckEnd()
+    bool CheckEnd()
     {
         // cycle through all tiles
         // see if there is a token
@@ -443,6 +444,7 @@ public class GameController : MonoBehaviour {
                                                             Instantiate(highlightTile, new Vector3(t2.tilePos.x * tileSize, t2.tilePos.y * tileSize, 0), Quaternion.identity);
                                                             Instantiate(highlightTile, new Vector3(t3.tilePos.x * tileSize, t3.tilePos.y * tileSize, 0), Quaternion.identity);
                                                             Debug.Log("Player " + tokenType + " wins!");
+                                                            return true;
                                                         }
                                                     }
                                                 }
@@ -456,6 +458,7 @@ public class GameController : MonoBehaviour {
                 }
             }
         }
+        return false;
     }
 
     void EndGame()
@@ -779,86 +782,98 @@ public class GameController : MonoBehaviour {
         float choiceBias = 0.9f;
 
         // choose move
+        int choice = 0;
         if(Random.Range(0.0f, 1.0f) < choiceBias)
         {
-            chosenTile = sortedTiles[0];
+            chosenTile = sortedTiles[choice];
         } else
         {
-            chosenTile = sortedTiles[Random.Range(1, movesToConsider)];
+            choice = Random.Range(1, movesToConsider);
+            chosenTile = sortedTiles[choice];
         }
 
         // execute move 
-        StartCoroutine(MakeAIMove(chosenTile, moves.place));
+        StartCoroutine(MakeAIMove(chosenTile, moves.place, sortedTiles, choice));
 
     }
 
-    IEnumerator MakeAIMove(tile chosenTile, moves moveChoice)
+    IEnumerator MakeAIMove(tile chosenTile, moves moveChoice, List<tile> sortedTiles, int moveChoiceIndex = 0)
     {
-        Debug.Log("AI aiming to go to " + chosenTile.tilePos.x + ", " + chosenTile.tilePos.y);
-        float defaultWait = 0.2f;
-        state = states.transitioning;
-        yield return new WaitForSeconds(defaultWait);
-        // is current tile the right tile? 
-        bool targetReached = false;
-        while (!targetReached)
+        if (state != states.ending)
         {
-            if (chosenTile.tilePos == selectorPos)
+            Debug.Log("AI aiming to go to " + chosenTile.tilePos.x + ", " + chosenTile.tilePos.y);
+            float defaultWait = 0.02f;
+            state = states.transitioning;
+            yield return new WaitForSeconds(defaultWait);
+            // is current tile the right tile? 
+            bool targetReached = false;
+            while (!targetReached)
             {
-                Debug.Log("AI target tile reached");
-                targetReached = true;
-                // in the right tile, so make the right move
-                yield return new WaitForSeconds(defaultWait);
-                currentMove = moveChoice;
-                UpdateActionSprite();
-                yield return new WaitForSeconds(defaultWait);
-                if (currentMove != moves.move)
+                if (chosenTile.tilePos == selectorPos)
                 {
-                    if (DoAction(selectorPos))
+                    Debug.Log("AI target tile reached");
+                    targetReached = true;
+                    // in the right tile, so make the right move
+                    yield return new WaitForSeconds(defaultWait);
+                    currentMove = moveChoice;
+                    UpdateActionSprite();
+                    yield return new WaitForSeconds(defaultWait);
+                    if (currentMove != moves.move)
                     {
-                        Debug.Log("AI " + player + " move made");
+                        if (DoAction(selectorPos))
+                        {
+                            Debug.Log("AI " + player + " move made");
+                        }
+                        else
+                        {
+                            // for some reason, this move was invalid - so choose the next move
+                            targetReached = false;
+                            moveChoiceIndex++;
+                            chosenTile = sortedTiles[moveChoiceIndex];
+                        }
                     }
-                }
-                else if (currentMove == moves.move)
-                {
-                    // Do something clever for actually moving stacks...
-                    if (MoveStack(selectorPos))
+                    else if (currentMove == moves.move)
                     {
-                        state = states.moving;
+                        // Do something clever for actually moving stacks...
+                        if (MoveStack(selectorPos))
+                        {
+                            state = states.moving;
+                        }
                     }
-                }
 
+                }
+                else
+                {
+                    // figure out x and y differences
+                    int xDiff = (int)(selectorPos.x - chosenTile.tilePos.x);
+                    int yDiff = (int)(selectorPos.y - chosenTile.tilePos.y);
+                    Debug.Log("xDiff " + xDiff + ", yDiff " + yDiff);
+
+                    // make appropriate move and then wait
+                    Debug.Log("AI " + player + " making move...");
+                    if (xDiff < 0)
+                    {
+                        MakeMove(new Vector2(1, 0));
+                    }
+                    else if (xDiff > 0)
+                    {
+                        MakeMove(new Vector2(-1, 0));
+                    }
+                    else if (yDiff < 0)
+                    {
+                        MakeMove(new Vector2(0, 1));
+                    }
+                    else if (yDiff > 0)
+                    {
+                        MakeMove(new Vector2(0, -1));
+                    }
+
+                    yield return new WaitForSeconds(defaultWait);
+
+                }
             }
-            else
-            {
-                // figure out x and y differences
-                int xDiff = (int)(selectorPos.x - chosenTile.tilePos.x);
-                int yDiff = (int)(selectorPos.y - chosenTile.tilePos.y);
-                Debug.Log("xDiff " + xDiff + ", yDiff " + yDiff); 
-
-                // make appropriate move and then wait
-                Debug.Log("Making move...");
-                if (xDiff < 0)
-                {
-                    MakeMove(new Vector2(1, 0));
-                }
-                else if(xDiff > 0)
-                {
-                    MakeMove(new Vector2(-1, 0));
-                }
-                else if(yDiff < 0)
-                {
-                    MakeMove(new Vector2(0, 1));
-                } else if (yDiff > 0)
-                {
-                    MakeMove(new Vector2(0, -1));
-                }
-           
-                yield return new WaitForSeconds(defaultWait);
-                Debug.Log("selector pos " + selectorPos);
-
-            }
+            StartCoroutine("FinishTurn");
         }
-        StartCoroutine("FinishTurn");
         
     }
 }
