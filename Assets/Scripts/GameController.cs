@@ -891,7 +891,7 @@ public class GameController : MonoBehaviour {
         if (state != states.ending)
         {
             Debug.Log("AI aiming to go to " + chosenTile.tilePos.x + ", " + chosenTile.tilePos.y);
-            float defaultWait = 0.02f;
+            float defaultWait = 0.2f;
             state = states.transitioning;
             yield return new WaitForSeconds(defaultWait);
             // is current tile the right tile? 
