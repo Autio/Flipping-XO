@@ -577,7 +577,7 @@ public class GameController : MonoBehaviour {
     // Main AI brain 
     void UpdateBoardValues()
     {
-        // update the weightings of each tile on the board for each player based on some heuristics
+        // update the weightings of each tile on the board for the current player based on some heuristics
 
         // have some kind of debug mode which shows the heatmap of valuable moves by player
 
@@ -602,11 +602,21 @@ public class GameController : MonoBehaviour {
         // 
         foreach (tile t in tileList)
         {
-            // if the tile already has the player's tile at the top of its stack, set desirability to minimum
-            if (t.tokens.Count != 0 && t.tokens[t.tokens.Count - 1].ownerPlayer == player)
+
+            if (t.tokens.Count >= 4)
             {
                 t.moveWeights[player - 1] = 0;
+
+                // except if you should be moving the stack...
             }
+
+            if (t.tokens.Count > 1 && t.tokens[0].ownerPlayer == player)  
+            {
+                // bottommost tile is yours, you should consider flipping it
+                t.moveWeights[player - 1] = 4;
+                // how to mark it to be flipped?
+
+            } 
             else
             {
 
@@ -615,26 +625,71 @@ public class GameController : MonoBehaviour {
                 {
                     if (CheckInBounds(t.tilePos + directions[d]))
                     {
-                        // find the tile in question
+                        // find the neighbouring tile in question
                         tile neighbourTile;
                         neighbourTile = FindTileByPos(t.tilePos + directions[d], tileList);
 
-                        // cycle through all players
-                        for (int p = 1; p <= playerLimit; p++)
+                        // look at topmost token of neighbour tile
+                        if (neighbourTile.tokens.Count != 0 && neighbourTile.tokens[neighbourTile.tokens.Count - 1].ownerPlayer == player)
                         {
-                            // look at topmost token of neighbour tile
-                            if (neighbourTile.tokens.Count != 0 && neighbourTile.tokens[neighbourTile.tokens.Count - 1].ownerPlayer == p)
+                            // if neighbouring tile has your token on it, you want to consider placing your token next to it
+                            t.moveWeights[player - 1] = 5;
+
+                            // iterate further in the same direction to see if there's two in a line
+                            if (CheckInBounds(t.tilePos + (directions[d] * 2)))
                             {
-                                // if neighbouring tile has your token on it, you want to consider placing your token next to it
-                                t.moveWeights[player - 1] = 5;
+                                // find the neighbouring tile in question
+                                neighbourTile = FindTileByPos(t.tilePos + (directions[d] * 2), tileList);
+
+                                // look at topmost token of neighbour tile
+                                if (neighbourTile.tokens.Count != 0 && neighbourTile.tokens[neighbourTile.tokens.Count - 1].ownerPlayer == player)
+                                {
+                                    // this move will win
+                                    t.moveWeights[player - 1] = 10;
+                                }
                             }
 
-                            // look at bottommost token, if not the top one
+                            // check the opposite direction
+                            int od;
+                            if (d < 4)
+                            {
+                                od = d + 4;
+                            } else
+                            {
+                                od = d - 4;
+                            }
+
+                            if (CheckInBounds(t.tilePos + (directions[od])))
+                            {
+                                // find the neighbouring tile in question
+                                neighbourTile = FindTileByPos(t.tilePos + (directions[od]), tileList);
+
+                                // look at topmost token of neighbour tile
+                                if (neighbourTile.tokens.Count != 0 && neighbourTile.tokens[neighbourTile.tokens.Count - 1].ownerPlayer == player)
+                                {
+                                    // this move will win
+                                    t.moveWeights[player - 1] = 10;
+                                }
+                            }
 
                         }
+
+
+
+
+                        // check the opposite direction to see if there's two in a line
+                        // opposite directions: 0, 4; 1, 5; 2, 6; 3, 7;
+
                     }
                 }
             }
+            
+            // if the tile already has the player's tile at the top of its stack, set desirability to minimum
+            if (t.tokens.Count != 0 && t.tokens[t.tokens.Count - 1].ownerPlayer == player)
+            {
+                t.moveWeights[player - 1] = 0;
+            }
+
         }
         
 
