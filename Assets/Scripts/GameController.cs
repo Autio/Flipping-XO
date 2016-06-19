@@ -151,6 +151,7 @@ public class GameController : MonoBehaviour {
         {
             if(t.tilePos == pos)
             {
+                foundTile = t;
                 return foundTile;
             }
         }
@@ -393,6 +394,7 @@ public class GameController : MonoBehaviour {
         {
             // rethink the map
             UpdateBoardValues();
+            DrawDebugHeatmap();
             state = states.playing;
         }
     }
@@ -601,9 +603,9 @@ public class GameController : MonoBehaviour {
         foreach (tile t in tileList)
         {
             // if the tile already has the player's tile at the top of its stack, set desirability to minimum
-            if (t.tokens[t.tokens.Count - 1].ownerPlayer == player)
+            if (t.tokens.Count != 0 && t.tokens[t.tokens.Count - 1].ownerPlayer == player)
             {
-                t.moveWeights[player] = 0;
+                t.moveWeights[player - 1] = 0;
             }
             else
             {
@@ -621,10 +623,10 @@ public class GameController : MonoBehaviour {
                         for (int p = 1; p <= playerLimit; p++)
                         {
                             // look at topmost token of neighbour tile
-                            if (neighbourTile.tokens[neighbourTile.tokens.Count - 1].ownerPlayer == p)
+                            if (neighbourTile.tokens.Count != 0 && neighbourTile.tokens[neighbourTile.tokens.Count - 1].ownerPlayer == p)
                             {
                                 // if neighbouring tile has your token on it, you want to consider placing your token next to it
-                                t.moveWeights[player] = 5;
+                                t.moveWeights[player - 1] = 5;
                             }
 
                             // look at bottommost token, if not the top one
