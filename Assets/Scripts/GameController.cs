@@ -108,6 +108,7 @@ public class GameController : MonoBehaviour {
         // value for each player
         public int[] moveWeights = new int[4];
         public moves[] moveType = new moves[4]; // should only contain: place, flip, move
+        public bool isEdge = false;
     }
 
     class token
@@ -551,17 +552,18 @@ public class GameController : MonoBehaviour {
         // edge tiles have a value of 1, core tiles more
         foreach (tile t in tileList)
         {
-            bool isEdge = false;
+            
             foreach (Vector2 d in directions)
             {
                 if(!CheckInBounds(t.tilePos + d))
                 {
-                    isEdge = true;
-                }
+                    t.isEdge = true;
+                } 
+                
             }
             for (int p = 0; p < playerLimit; p++)
             {
-                if(isEdge)
+                if(t.isEdge)
                 {
                     t.moveWeights[p] = 1;
                 }
@@ -637,7 +639,7 @@ public class GameController : MonoBehaviour {
             else
             {
 
-                // check all neighbours within board bounds
+                // check all neighbours within board bounds - Maybe this should happen first of all?
                 for (int d = 0; d < directions.Length; d++)
                 {
                     if (CheckInBounds(t.tilePos + directions[d]))
@@ -685,17 +687,19 @@ public class GameController : MonoBehaviour {
                             }
 
                         }
-
-
-
-
-                        // check the opposite direction to see if there's two in a line
-                        // opposite directions: 0, 4; 1, 5; 2, 6; 3, 7;
-
                     }
                 }
             }
             
+            // if the tile is a central tile, it should be more valuable
+            if(t.moveWeights[player - 1] < 10)
+            {
+                if(!t.isEdge)
+                {
+                    t.moveWeights[player - 1] += 1;
+                }
+            }
+
             // if the tile already has the player's tile at the top of its stack, set desirability to minimum
             if (t.tokens.Count != 0 && t.tokens[t.tokens.Count - 1].ownerPlayer == player)
             {
@@ -928,11 +932,11 @@ public class GameController : MonoBehaviour {
         }
 
         // execute move 
-        StartCoroutine(MakeAIMove(chosenTile, moves.place, sortedTiles, choice));
+        StartCoroutine(MakeAIMove(chosenTile, sortedTiles, choice));
 
     }
 
-    IEnumerator MakeAIMove(tile chosenTile, moves moveChoice, List<tile> sortedTiles, int moveChoiceIndex = 0)
+    IEnumerator MakeAIMove(tile chosenTile, List<tile> sortedTiles, int moveChoiceIndex = 0)
     {
         if (state != states.ending)
         {
@@ -950,7 +954,7 @@ public class GameController : MonoBehaviour {
                     targetReached = true;
                     // in the right tile, so make the right move
                     yield return new WaitForSeconds(defaultWait);
-                    currentMove = moveChoice;
+                    currentMove = chosenTile.moveType[player - 1];
                     UpdateActionSprite();
                     yield return new WaitForSeconds(defaultWait);
                     if (currentMove != moves.move)
