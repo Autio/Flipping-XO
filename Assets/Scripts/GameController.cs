@@ -576,6 +576,12 @@ public class GameController : MonoBehaviour {
 
     }
 
+    void SetTileMove(int playerIndex, tile t, int moveWeight, moves move)
+    {
+        t.moveWeights[playerIndex] = moveWeight;
+        t.moveType[playerIndex] = move;
+    }
+
     
     // Main AI brain 
     void UpdateBoardValues()
@@ -609,16 +615,12 @@ public class GameController : MonoBehaviour {
             // also keep in mind that the AI could mind read the optimal moves of the other players...
             // but in that case the other players views should be updated first to take into account
             // the moves that have been made
-
-            t.moveWeights[player - 1] = 1;
-            t.moveType[player - 1] = moves.place;
-
+            SetTileMove(player - 1, t, 1, moves.place);
 
             if (t.tokens.Count >= 4)
             {
-                t.moveWeights[player - 1] = 0;
-                t.moveType[player - 1] = moves.move;
-
+                SetTileMove(player - 1, t, 0, moves.move);
+                
                 // you should be moving the stack if it's a block to your plans or a threat
                 // maybe you should only move the stack when there's a full line about to happen
 
@@ -629,9 +631,7 @@ public class GameController : MonoBehaviour {
             if (t.tokens.Count > 1 && t.tokens[0].ownerPlayer == player)  
             {
                 // bottommost tile is yours, you should consider flipping it
-                t.moveWeights[player - 1] = 4;
-                // how to mark it to be flipped?
-                t.moveType[player - 1] = moves.flip;
+                SetTileMove(player - 1, t, 4, moves.flip);
 
             } 
             else
@@ -650,7 +650,7 @@ public class GameController : MonoBehaviour {
                         if (neighbourTile.tokens.Count != 0 && neighbourTile.tokens[neighbourTile.tokens.Count - 1].ownerPlayer == player)
                         {
                             // if neighbouring tile has your token on it, you want to consider placing your token next to it
-                            t.moveWeights[player - 1] = 5;
+                            SetTileMove(player - 1, t, 5, moves.place);
 
                             // iterate further in the same direction to see if there's two in a line
                             if (CheckInBounds(t.tilePos + (directions[d] * 2)))
@@ -662,7 +662,8 @@ public class GameController : MonoBehaviour {
                                 if (neighbourTile.tokens.Count != 0 && neighbourTile.tokens[neighbourTile.tokens.Count - 1].ownerPlayer == player)
                                 {
                                     // this move will win
-                                    t.moveWeights[player - 1] = 10;
+                                    SetTileMove(player - 1, t, 10, moves.place);
+                                   
                                 }
                             }
 
@@ -678,7 +679,8 @@ public class GameController : MonoBehaviour {
                                 if (neighbourTile.tokens.Count != 0 && neighbourTile.tokens[neighbourTile.tokens.Count - 1].ownerPlayer == player)
                                 {
                                     // this move will win
-                                    t.moveWeights[player - 1] = 10;
+                                    SetTileMove(player - 1, t, 10, moves.place);
+
                                 }
                             }
 
@@ -697,7 +699,9 @@ public class GameController : MonoBehaviour {
             // if the tile already has the player's tile at the top of its stack, set desirability to minimum
             if (t.tokens.Count != 0 && t.tokens[t.tokens.Count - 1].ownerPlayer == player)
             {
-                t.moveWeights[player - 1] = 0;
+
+                SetTileMove(player - 1, t, 0, moves.place);
+
             }
 
         }
