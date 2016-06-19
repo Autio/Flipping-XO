@@ -143,6 +143,21 @@ public class GameController : MonoBehaviour {
 
     }
 
+    tile FindTileByPos(Vector2 pos, List<tile> tList)
+    {
+        tile foundTile = null;
+
+        foreach (tile t in tList)
+        {
+            if(t.tilePos == pos)
+            {
+                return foundTile;
+            }
+        }
+
+        return foundTile;
+    }
+
     void MakeMove(Vector2 dir)
     {
         // move on x-axis
@@ -376,6 +391,8 @@ public class GameController : MonoBehaviour {
         UpdateActionSprite();
         if (!CheckEnd())
         {
+            // rethink the map
+            UpdateBoardValues();
             state = states.playing;
         }
     }
@@ -554,6 +571,8 @@ public class GameController : MonoBehaviour {
 
     }
 
+    
+    // Main AI brain 
     void UpdateBoardValues()
     {
         // update the weightings of each tile on the board for each player based on some heuristics
@@ -581,26 +600,39 @@ public class GameController : MonoBehaviour {
         // 
         foreach (tile t in tileList)
         {
-            // check all neighbours within board bounds
-            for (int d = 0; d < directions.Length; d++)
+            // if the tile already has the player's tile at the top of its stack, set desirability to minimum
+            if (t.tokens[t.tokens.Count - 1].ownerPlayer == player)
             {
-                if(CheckInBounds(t.tilePos + directions[d]))
+                t.moveWeights[player] = 0;
+            }
+            else
+            {
+
+                // check all neighbours within board bounds
+                for (int d = 0; d < directions.Length; d++)
                 {
-                    // cycle through all players
-                    for (int p = 1; p <= playerLimit; p++)
+                    if (CheckInBounds(t.tilePos + directions[d]))
                     {
-                        // look at topmost token
-                        if(t.tokens[t.tokens.Count].ownerPlayer == p)
+                        // find the tile in question
+                        tile neighbourTile;
+                        neighbourTile = FindTileByPos(t.tilePos + directions[d], tileList);
+
+                        // cycle through all players
+                        for (int p = 1; p <= playerLimit; p++)
                         {
+                            // look at topmost token of neighbour tile
+                            if (neighbourTile.tokens[neighbourTile.tokens.Count - 1].ownerPlayer == p)
+                            {
+                                // if neighbouring tile has your token on it, you want to consider placing your token next to it
+                                t.moveWeights[player] = 5;
+                            }
+
+                            // look at bottommost token, if not the top one
 
                         }
-
-                        // look at bottommost token, if not the top one
-
                     }
                 }
             }
-
         }
         
 
