@@ -872,6 +872,22 @@ public class GameController : MonoBehaviour {
 
         // choose move
         int choice = 0;
+
+        // are the first 3 moves of equal weight? If so, choose from them
+        if(sortedTiles[0].moveWeights[player - 1] == sortedTiles[1].moveWeights[player - 1])
+        {
+            if (sortedTiles[0].moveWeights[player - 1] == sortedTiles[2].moveWeights[player - 1])
+            {
+                // choose from three
+                choice = Random.Range(0, 2);
+            }
+            else
+            {
+                // choose from two
+                choice = Random.Range(0, 3);
+            }
+        }
+
         if(Random.Range(0.0f, 1.0f) < choiceBias)
         {
             chosenTile = sortedTiles[choice];
