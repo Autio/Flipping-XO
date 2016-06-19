@@ -6,7 +6,7 @@ using System.Linq;
 
 public class GameController : MonoBehaviour {
     enum states {starting, playing, moving, transitioning, ending}
-    enum moves { place, flip, move}
+    enum moves { place, flip, move }
     int tileSize = 16;
     int player = 1;
     public int playerLimit = 4;
@@ -107,6 +107,7 @@ public class GameController : MonoBehaviour {
         public List<token> tokens = new List<token>();
         // value for each player
         public int[] moveWeights = new int[4];
+        public moves[] moveType = new moves[4]; // should only contain: place, flip, move
     }
 
     class token
@@ -568,6 +569,8 @@ public class GameController : MonoBehaviour {
                 {
                     t.moveWeights[p] = 2;
                 }
+                // in any case, you want to place the tile
+                t.moveType[p] = moves.place;
             }
         }
 
@@ -602,12 +605,25 @@ public class GameController : MonoBehaviour {
         // 
         foreach (tile t in tileList)
         {
+            // the tile values should probably be reset for this player
+            // also keep in mind that the AI could mind read the optimal moves of the other players...
+            // but in that case the other players views should be updated first to take into account
+            // the moves that have been made
+
+            t.moveWeights[player - 1] = 1;
+            t.moveType[player - 1] = moves.place;
+
 
             if (t.tokens.Count >= 4)
             {
                 t.moveWeights[player - 1] = 0;
+                t.moveType[player - 1] = moves.move;
 
-                // except if you should be moving the stack...
+                // you should be moving the stack if it's a block to your plans or a threat
+                // maybe you should only move the stack when there's a full line about to happen
+
+                // move recipient tiles = tiles you'd be happy to place to
+                // so if a move stack tile is chosen, the placement tile shoiuld be the tile with the highest value and is due a place action
             }
 
             if (t.tokens.Count > 1 && t.tokens[0].ownerPlayer == player)  
@@ -615,6 +631,7 @@ public class GameController : MonoBehaviour {
                 // bottommost tile is yours, you should consider flipping it
                 t.moveWeights[player - 1] = 4;
                 // how to mark it to be flipped?
+                t.moveType[player - 1] = moves.flip;
 
             } 
             else
@@ -650,15 +667,8 @@ public class GameController : MonoBehaviour {
                             }
 
                             // check the opposite direction
-                            int od;
-                            if (d < 4)
-                            {
-                                od = d + 4;
-                            } else
-                            {
-                                od = d - 4;
-                            }
-
+                            int od = OppositeDirection(d);
+  
                             if (CheckInBounds(t.tilePos + (directions[od])))
                             {
                                 // find the neighbouring tile in question
@@ -693,6 +703,20 @@ public class GameController : MonoBehaviour {
         }
         
 
+    }
+
+    int OppositeDirection(int d)
+    {
+        int od;
+        if (d < 4)
+        {
+            od = d + 4;
+        }
+        else
+        {
+            od = d - 4;
+        }
+        return od;
     }
 
     void ChangeCurrentMove()
@@ -893,6 +917,8 @@ public class GameController : MonoBehaviour {
             chosenTile = sortedTiles[choice];
         } else
         {
+            // AI misthinks
+            Debug.Log("AI " + player + " may have had a brain fart - optimal move not chosen");
             choice = Random.Range(1, movesToConsider);
             chosenTile = sortedTiles[choice];
         }
