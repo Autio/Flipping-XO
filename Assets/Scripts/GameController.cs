@@ -5,6 +5,7 @@ using UnityEngine.SceneManagement;
 using System.Linq;
 
 public class GameController : MonoBehaviour {
+
     enum states {starting, playing, moving, transitioning, ending}
     enum moves { place, flip, move }
     int tileSize = 16;
@@ -34,9 +35,9 @@ public class GameController : MonoBehaviour {
     
     
     // Use this for initialization
-
     void Start () {
 
+        // directions in a square grid
         directions[0] = new Vector2(0, 1);
         directions[1] = new Vector2(1, 1);
         directions[2] = new Vector2(1, 0);
@@ -48,10 +49,13 @@ public class GameController : MonoBehaviour {
 
         selectorPos = new Vector2(0, 0);
 
+        // Grid side length
+        int gridSize = 4;
+
         GameObject tileHolder = GameObject.Find("TileHolder");
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < gridSize; i++)
         {
-            for (int j = 0; j < 4; j++)
+            for (int j = 0; j < gridSize; j++)
             {
                 tile newTile = new tile();
                 tile newDebugTile = new tile();
@@ -72,10 +76,12 @@ public class GameController : MonoBehaviour {
                     t = (Transform)Instantiate(backgroundTiles[1], new Vector2(i * tileSize, j * tileSize), Quaternion.identity);
                 }
                 dt = (Transform)Instantiate(debugTile, new Vector2(i * tileSize, j * tileSize), Quaternion.identity);
+
                 newTile.tileObject = t;
                 newTile.tilePos = new Vector2(i, j);
                 newDebugTile.tileObject = dt;
                 newDebugTile.tilePos = new Vector2(i, j);
+
                 tileList.Add(newTile);
                 debugTileList.Add(newDebugTile);
 
@@ -89,12 +95,10 @@ public class GameController : MonoBehaviour {
         // update which action sprite is shown, type and colour
         UpdateActionSprite();
 
-
         // AI heatmap
         InitialBoardValues();
 
         ToggleHeatmap(false);
-
 
         UpdateActionSprite();
     }
@@ -105,7 +109,8 @@ public class GameController : MonoBehaviour {
         public int stack;
         public Transform tileObject;
         public List<token> tokens = new List<token>();
-        // value for each player
+
+        // Weighting moves
         public int[] moveWeights = new int[4];
         public moves[] moveType = new moves[4]; // should only contain: place, flip, move
         public bool isEdge = false;
@@ -530,21 +535,10 @@ public class GameController : MonoBehaviour {
                         Debug.Log("moveweight " + moveWeight);
                         Debug.Log("second lerp " + lerp);
                         dt.tileObject.FindChild("debugTile").GetComponent<Renderer>().material.color = Color.Lerp(colorStart2, colorEnd2, lerp);
-
                     }
-                    
-
-                   
                 }
             }
-
-
         }
-
-
-
-
-
     }
 
     void InitialBoardValues()
@@ -583,136 +577,7 @@ public class GameController : MonoBehaviour {
         t.moveWeights[playerIndex] = moveWeight;
         t.moveType[playerIndex] = move;
     }
-
-    
-    // Main AI brain 
-    void UpdateBoardValues()
-    {
-        // update the weightings of each tile on the board for the current player based on some heuristics
-
-        // have some kind of debug mode which shows the heatmap of valuable moves by player
-
-        // things to take into account:
-        // is there an imminent victory about to happen? player order matters here
-        // bottom and top tiles in stacks
-        // gaps in threes
-        // how to mark that flipping the stack is the right move?
-        // how to mark that moving the stack is the right move? 
-
-
-        // move values from 1 to 10, if 10 it's a winning move
-        // the number should denote which tiles to pay attention to
-        // when checking: if you yourself don't have a 10, check the next person and block their 10
-
-        // cycle through all tiles
-
-        // view neighbouring tiles, if they are present
-
-        // awareness of top and bottom tile
-
-        // 
-        foreach (tile t in tileList)
-        {
-            // the tile values should probably be reset for this player
-            // also keep in mind that the AI could mind read the optimal moves of the other players...
-            // but in that case the other players views should be updated first to take into account
-            // the moves that have been made
-            SetTileMove(player - 1, t, 1, moves.place);
-
-            if (t.tokens.Count >= 4)
-            {
-                SetTileMove(player - 1, t, 0, moves.move);
-                
-                // you should be moving the stack if it's a block to your plans or a threat
-                // maybe you should only move the stack when there's a full line about to happen
-
-                // move recipient tiles = tiles you'd be happy to place to
-                // so if a move stack tile is chosen, the placement tile shoiuld be the tile with the highest value and is due a place action
-            }
-
-            if (t.tokens.Count > 1 && t.tokens[0].ownerPlayer == player)  
-            {
-                // bottommost tile is yours, you should consider flipping it
-                SetTileMove(player - 1, t, 4, moves.flip);
-
-            } 
-            else
-            {
-
-                // check all neighbours within board bounds - Maybe this should happen first of all?
-                for (int d = 0; d < directions.Length; d++)
-                {
-                    if (CheckInBounds(t.tilePos + directions[d]))
-                    {
-                        // find the neighbouring tile in question
-                        tile neighbourTile;
-                        neighbourTile = FindTileByPos(t.tilePos + directions[d], tileList);
-
-                        // look at topmost token of neighbour tile
-                        if (neighbourTile.tokens.Count != 0 && neighbourTile.tokens[neighbourTile.tokens.Count - 1].ownerPlayer == player)
-                        {
-                            // if neighbouring tile has your token on it, you want to consider placing your token next to it
-                            SetTileMove(player - 1, t, 5, moves.place);
-
-                            // iterate further in the same direction to see if there's two in a line
-                            if (CheckInBounds(t.tilePos + (directions[d] * 2)))
-                            {
-                                // find the neighbouring tile in question
-                                neighbourTile = FindTileByPos(t.tilePos + (directions[d] * 2), tileList);
-
-                                // look at topmost token of neighbour tile
-                                if (neighbourTile.tokens.Count != 0 && neighbourTile.tokens[neighbourTile.tokens.Count - 1].ownerPlayer == player)
-                                {
-                                    // this move will win
-                                    SetTileMove(player - 1, t, 10, moves.place);
-                                   
-                                }
-                            }
-
-                            // check the opposite direction
-                            int od = OppositeDirection(d);
-  
-                            if (CheckInBounds(t.tilePos + (directions[od])))
-                            {
-                                // find the neighbouring tile in question
-                                neighbourTile = FindTileByPos(t.tilePos + (directions[od]), tileList);
-
-                                // look at topmost token of neighbour tile
-                                if (neighbourTile.tokens.Count != 0 && neighbourTile.tokens[neighbourTile.tokens.Count - 1].ownerPlayer == player)
-                                {
-                                    // this move will win
-                                    SetTileMove(player - 1, t, 10, moves.place);
-
-                                }
-                            }
-
-                        }
-                    }
-                }
-            }
-            
-            // if the tile is a central tile, it should be more valuable
-            if(t.moveWeights[player - 1] < 10)
-            {
-                if(!t.isEdge)
-                {
-                    t.moveWeights[player - 1] += 1;
-                }
-            }
-
-            // if the tile already has the player's tile at the top of its stack, set desirability to minimum
-            if (t.tokens.Count != 0 && t.tokens[t.tokens.Count - 1].ownerPlayer == player)
-            {
-
-                SetTileMove(player - 1, t, 0, moves.place);
-
-            }
-
-        }
-        
-
-    }
-
+ 
     int OppositeDirection(int d)
     {
         int od;
@@ -882,6 +747,136 @@ public class GameController : MonoBehaviour {
         
 
 	}
+
+
+    // Main AI brain 
+    void UpdateBoardValues()
+    {
+        // update the weightings of each tile on the board for the current player based on some heuristics
+
+        // have some kind of debug mode which shows the heatmap of valuable moves by player
+
+        // things to take into account:
+        // is there an imminent victory about to happen? player order matters here
+        // bottom and top tiles in stacks
+        // gaps in threes
+        // how to mark that flipping the stack is the right move?
+        // how to mark that moving the stack is the right move? 
+
+
+        // move values from 1 to 10, if 10 it's a winning move
+        // the number should denote which tiles to pay attention to
+        // when checking: if you yourself don't have a 10, check the next person and block their 10
+
+        // cycle through all tiles
+
+        // view neighbouring tiles, if they are present
+
+        // awareness of top and bottom tile
+
+        // 
+        foreach (tile t in tileList)
+        {
+            // the tile values should probably be reset for this player
+            // also keep in mind that the AI could mind read the optimal moves of the other players...
+            // but in that case the other players views should be updated first to take into account
+            // the moves that have been made
+            SetTileMove(player - 1, t, 1, moves.place);
+
+            if (t.tokens.Count >= 4)
+            {
+                SetTileMove(player - 1, t, 0, moves.move);
+
+                // you should be moving the stack if it's a block to your plans or a threat
+                // maybe you should only move the stack when there's a full line about to happen
+
+                // move recipient tiles = tiles you'd be happy to place to
+                // so if a move stack tile is chosen, the placement tile shoiuld be the tile with the highest value and is due a place action
+            }
+
+            if (t.tokens.Count > 1 && t.tokens[0].ownerPlayer == player)
+            {
+                // bottommost tile is yours, you should consider flipping it
+                SetTileMove(player - 1, t, 4, moves.flip);
+
+            }
+            else
+            {
+
+                // check all neighbours within board bounds - Maybe this should happen first of all?
+                for (int d = 0; d < directions.Length; d++)
+                {
+                    if (CheckInBounds(t.tilePos + directions[d]))
+                    {
+                        // find the neighbouring tile in question
+                        tile neighbourTile;
+                        neighbourTile = FindTileByPos(t.tilePos + directions[d], tileList);
+
+                        // look at topmost token of neighbour tile
+                        if (neighbourTile.tokens.Count != 0 && neighbourTile.tokens[neighbourTile.tokens.Count - 1].ownerPlayer == player)
+                        {
+                            // if neighbouring tile has your token on it, you want to consider placing your token next to it
+                            SetTileMove(player - 1, t, 5, moves.place);
+
+                            // iterate further in the same direction to see if there's two in a line
+                            if (CheckInBounds(t.tilePos + (directions[d] * 2)))
+                            {
+                                // find the neighbouring tile in question
+                                neighbourTile = FindTileByPos(t.tilePos + (directions[d] * 2), tileList);
+
+                                // look at topmost token of neighbour tile
+                                if (neighbourTile.tokens.Count != 0 && neighbourTile.tokens[neighbourTile.tokens.Count - 1].ownerPlayer == player)
+                                {
+                                    // this move will win
+                                    SetTileMove(player - 1, t, 10, moves.place);
+
+                                }
+                            }
+
+                            // check the opposite direction
+                            int od = OppositeDirection(d);
+
+                            if (CheckInBounds(t.tilePos + (directions[od])))
+                            {
+                                // find the neighbouring tile in question
+                                neighbourTile = FindTileByPos(t.tilePos + (directions[od]), tileList);
+
+                                // look at topmost token of neighbour tile
+                                if (neighbourTile.tokens.Count != 0 && neighbourTile.tokens[neighbourTile.tokens.Count - 1].ownerPlayer == player)
+                                {
+                                    // this move will win
+                                    SetTileMove(player - 1, t, 10, moves.place);
+
+                                }
+                            }
+
+                        }
+                    }
+                }
+            }
+
+            // if the tile is a central tile, it should be more valuable
+            if (t.moveWeights[player - 1] < 10)
+            {
+                if (!t.isEdge)
+                {
+                    t.moveWeights[player - 1] += 1;
+                }
+            }
+
+            // if the tile already has the player's tile at the top of its stack, set desirability to minimum
+            if (t.tokens.Count != 0 && t.tokens[t.tokens.Count - 1].ownerPlayer == player)
+            {
+
+                SetTileMove(player - 1, t, 0, moves.place);
+
+            }
+
+        }
+
+
+    }
+
 
     // AI 
     public void AI_move()
